@@ -18,15 +18,25 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(
-    @Body() userData: { email: string; password: string; phoneNumber: string },
-  ) {
-    return this.authService.registerUser(
-      userData.email,
-      userData.password,
-      userData.phoneNumber,
-    );
+async register(
+  @Body() userData: { email: string; password: string; phoneNumber: string },
+) {
+  console.log('My Body', userData);
+
+  let phoneNumber = userData.phoneNumber.trim();
+
+  // If it doesn't start with '+', assume it's Pakistani and prepend +92
+  if (!phoneNumber.startsWith('+')) {
+    phoneNumber = '+92' + phoneNumber;
   }
+
+  return this.authService.registerUser(
+    userData.email,
+    userData.password,
+    phoneNumber,
+  );
+}
+
 
   @Post('login')
   async login(@Body() credentials: { email: string; password: string }) {

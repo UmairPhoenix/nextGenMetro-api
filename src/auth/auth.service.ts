@@ -12,11 +12,12 @@ export class AuthService {
   constructor(private readonly firebase: FirebaseConfig) {}
 
   async registerUser(email: string, password: string, phoneNumber: string) {
+    console.log("My Phone Number", phoneNumber);
     try {
       const userRecord = await this.firebase.getAuth().createUser({
         email,
         password,
-        phoneNumber,
+        // phoneNumber,
       });
 
       await this.firebase
@@ -26,7 +27,7 @@ export class AuthService {
         .set({
           uid: userRecord.uid,
           email: userRecord.email,
-          phone: userRecord.phoneNumber,
+          // phone: userRecord.phoneNumber,
           isAdmin: false,
           createdAt: new Date(),
           balance: 0,
@@ -35,6 +36,7 @@ export class AuthService {
 
       return { message: 'User registered successfully', uid: userRecord.uid };
     } catch (error) {
+      console.log(error);
       throw new ConflictException(
         'Email already in use or invalid credentials',
       );
@@ -75,6 +77,7 @@ export class AuthService {
         token: response.data.idToken,
       };
     } catch (error) {
+      console.log("Error", error);
       throw new UnauthorizedException('Invalid email or password');
     }
   }
