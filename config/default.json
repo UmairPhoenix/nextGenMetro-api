@@ -1,0 +1,9 @@
+{
+  "app": {
+    "port": 3000
+  },
+  "database": {
+    "url": "postgres://postgres:yourpassword@localhost:5432/nextgen_metro",
+    "ssl": false
+  }
+}
