@@ -2,9 +2,11 @@ import 'dotenv/config';
 import express from 'express';
 import bodyParser from 'body-parser';
 import { connectToDB } from './db';
-import authRoutes from './routes/auth';
-import scanRoutes from './routes/scan';
-import adminRoutes from './routes/admin';
+import authRoutes from './routes/auth.route';
+import scanRoutes from './routes/scan.route';
+import adminRoutes from './routes/admin.route';
+import userRoutes from './routes/user.route';
+import jazzcashRoutes from './routes/jazzcash.route';
 
 async function main() {
   await connectToDB();
@@ -14,6 +16,8 @@ async function main() {
   app.use('/auth', authRoutes);
   app.use('/scan', scanRoutes);
   app.use('/admin', adminRoutes);
+  app.use('/user', userRoutes);
+  app.use('/jazzcash', jazzcashRoutes);
 
   const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
   app.listen(3000, '0.0.0.0', () => {

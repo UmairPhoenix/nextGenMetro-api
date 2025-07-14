@@ -1,9 +1,6 @@
-import { Router } from 'express';
 import { getDB } from '../db';
 import { users, trips } from '../models/schema';
 import { eq, and, isNull, desc } from 'drizzle-orm';
-
-const router = Router();
 
 const SERVICE_FARES: Record<string, number> = {
   Metro: 30,
@@ -11,18 +8,27 @@ const SERVICE_FARES: Record<string, number> = {
   Orange: 40,
 };
 
-router.post('/', async (req, res) => {
-  console.log('Received scan request:', req.body);
-  const { uid, service } = req.body;
-  if (!uid || !service) return res.status(400).json({ message: 'Missing uid or service' });
+type ScanInput = {
+  uid: number; // this is user.id from the DB
+  service: keyof typeof SERVICE_FARES;
+};
+
+export const processScan = async ({ uid, service }: ScanInput) => {
+  if (!uid || !service) {
+    throw new Error('Missing uid or service');
+  }
 
   if (!SERVICE_FARES[service]) {
-    return res.status(400).json({ message: 'Invalid service' });
+    throw new Error('Invalid service');
   }
 
   const db = getDB();
-  const [user] = await db.select().from(users).where(eq(users.nfc_uid, uid));
-  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  // 🔧 Use users.id instead of users.nfc_uid
+  const [user] = await db.select().from(users).where(eq(users.id, uid));
+  if (!user) {
+    throw new Error('User not found');
+  }
 
   const now = new Date();
 
@@ -36,43 +42,55 @@ router.post('/', async (req, res) => {
         isNull(trips.endTime)
       )
     )
-.orderBy(desc(trips.startTime))
+    .orderBy(desc(trips.startTime))
     .limit(1);
 
   if (!activeTrip) {
     const fare = SERVICE_FARES[service];
+
     if (user.balance < fare) {
-      return res.status(400).json({ message: 'Insufficient balance' });
+      throw new Error('Insufficient balance');
     }
+
     await db.insert(trips).values({
       userId: user.id,
       routeId: null,
       startTime: now,
-      fare: fare,
-      service: service,
+      fare,
+      service,
     });
+
+    const newBalance = user.balance - fare;
+
     await db
       .update(users)
-      .set({ balance: user.balance - fare })
+      .set({ balance: newBalance })
       .where(eq(users.id, user.id));
-    return res.json({
-      message: `${service} trip started, fare deducted`,
-      balance: user.balance - fare,
-    });
+
+    return {
+      message: `${service} trip started, fare of ${fare} deducted`,
+      fare,
+      balance: newBalance,
+      startTime: now,
+    };
   } else {
     await db
       .update(trips)
       .set({ endTime: now })
       .where(eq(trips.id, activeTrip.id));
+
+    const newBalance = user.balance + 5;
+
     await db
       .update(users)
-      .set({ balance: user.balance + 5 })
+      .set({ balance: newBalance })
       .where(eq(users.id, user.id));
-    return res.json({
-      message: `${service} trip ended, 5 refunded`,
-      balance: user.balance + 5,
-    });
-  }
-});
 
-export default router;
+    return {
+      message: `${service} trip ended, 5 refunded`,
+      refund: 5,
+      balance: newBalance,
+      endTime: now,
+    };
+  }
+};
