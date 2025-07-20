@@ -42,7 +42,6 @@ export const signup = async ({
       phone,
       passwordHash,
       role,
-      nfc_uid: '', // default blank; can be updated later
     })
     .returning();
 

@@ -42,7 +42,6 @@ export const signup = async ({
       phone,
       passwordHash,
       role,
-      nfc_uid: '', // Required field — default blank, to be set later via admin/NFC assignment
     })
     .returning();
 

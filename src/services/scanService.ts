@@ -14,21 +14,27 @@ type ScanInput = {
 };
 
 export const processScan = async ({ uid, service }: ScanInput) => {
+  console.log('\x1b[34m[SCAN INITIATED]\x1b[0m', `UID: ${uid}, Service: ${service}`);
+
   if (!uid || !service) {
+    console.log('\x1b[31m[ERROR]\x1b[0m Missing uid or service');
     throw new Error('Missing uid or service');
   }
 
   if (!SERVICE_FARES[service]) {
+    console.log('\x1b[31m[ERROR]\x1b[0m Invalid service type');
     throw new Error('Invalid service');
   }
 
   const db = getDB();
 
-  // 🔧 Use users.id instead of users.nfc_uid
   const [user] = await db.select().from(users).where(eq(users.id, uid));
   if (!user) {
+    console.log('\x1b[31m[ERROR]\x1b[0m User not found for ID:', uid);
     throw new Error('User not found');
   }
+
+  console.log('\x1b[32m[USER FOUND]\x1b[0m', user);
 
   const now = new Date();
 
@@ -47,8 +53,10 @@ export const processScan = async ({ uid, service }: ScanInput) => {
 
   if (!activeTrip) {
     const fare = SERVICE_FARES[service];
+    console.log('\x1b[36m[NO ACTIVE TRIP]\x1b[0m Checking balance...');
 
     if (user.balance < fare) {
+      console.log('\x1b[31m[ERROR]\x1b[0m Insufficient balance:', user.balance);
       throw new Error('Insufficient balance');
     }
 
@@ -66,6 +74,13 @@ export const processScan = async ({ uid, service }: ScanInput) => {
       .update(users)
       .set({ balance: newBalance })
       .where(eq(users.id, user.id));
+
+    console.log('\x1b[32m[TRIP STARTED]\x1b[0m', {
+      service,
+      fare,
+      newBalance,
+      time: now,
+    });
 
     return {
       message: `${service} trip started, fare of ${fare} deducted`,
@@ -85,6 +100,13 @@ export const processScan = async ({ uid, service }: ScanInput) => {
       .update(users)
       .set({ balance: newBalance })
       .where(eq(users.id, user.id));
+
+    console.log('\x1b[33m[TRIP ENDED]\x1b[0m', {
+      tripId: activeTrip.id,
+      refund: 5,
+      newBalance,
+      time: now,
+    });
 
     return {
       message: `${service} trip ended, 5 refunded`,
