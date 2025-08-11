@@ -4,6 +4,7 @@ import { users } from '../models/schema';
 import { eq } from 'drizzle-orm';
 import { generateToken } from '../middleware/auth';
 
+// ----------------- Input Types -------------------
 type SignupInput = {
   name: string;
   email: string;
@@ -17,6 +18,7 @@ type LoginInput = {
   password: string;
 };
 
+// ----------------- Signup ------------------------
 export const signup = async ({
   name,
   email,
@@ -42,7 +44,6 @@ export const signup = async ({
       phone,
       passwordHash,
       role,
-      nfc_uid: '', // Required field — default blank, to be set later via admin/NFC assignment
     })
     .returning();
 
@@ -50,6 +51,7 @@ export const signup = async ({
   return { token, user: newUser };
 };
 
+// ----------------- User Login --------------------
 export const login = async ({ email, password }: LoginInput) => {
   if (!email || !password) throw new Error('Missing email or password');
 
@@ -64,11 +66,29 @@ export const login = async ({ email, password }: LoginInput) => {
   return { token, user };
 };
 
+// ----------------- Admin Login -------------------
+export const adminLogin = async ({ email, password }: LoginInput) => {
+  if (!email || !password) throw new Error('Missing email or password');
+
+  const db = getDB();
+  const [user] = await db.select().from(users).where(eq(users.email, email));
+  if (!user || user.role !== 'admin') {
+    throw new Error('Access denied: Admin credentials required');
+  }
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) throw new Error('Invalid credentials');
+
+  const token = generateToken({ id: user.id, role: user.role });
+  return { token, user };
+};
+
+// ----------------- Forgot Password (Mock) -------------------
 export const forgotPassword = async (email: string) => {
   const db = getDB();
   const [user] = await db.select().from(users).where(eq(users.email, email));
   if (!user) throw new Error('Email not found');
 
-  // Placeholder: add real email logic or OTP system here
+  // In production: send email / OTP / reset token
   return { message: 'Reset instructions sent to your email (mock)' };
 };
