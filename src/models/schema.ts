@@ -22,11 +22,9 @@ export const users = pgTable(
     passwordHash: varchar('password_hash', { length: 255 }).notNull(),
     role: varchar('role', { length: 50 }).notNull(), // 'admin' or 'user'
     balance: integer('balance').notNull().default(0),
-    nfc_uid: varchar('nfc_uid', { length: 255 }), // Optional but included for scan pairing
   },
   (tbl) => ({
     emailIndex: uniqueIndex('users_email_idx').on(tbl.email),
-    uidIndex: uniqueIndex('users_uid_idx').on(tbl.nfc_uid), // Prevent duplicate NFC bindings
   })
 );
 
