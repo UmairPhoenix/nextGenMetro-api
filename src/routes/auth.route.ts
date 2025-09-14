@@ -1,15 +1,19 @@
+// src/routes/auth.route.ts
 import { Router } from 'express';
-import { login, signup, forgotPassword } from '../controllers/authController';
+import { login, signup, forgotPassword, adminLogin } from '../controllers/authController';
 
 const router = Router();
 
-// User signup (Admin signup not allowed via public route)
+// Public user signup
 router.post('/signup', signup);
 
-// Login (User or Admin)
+// User login
 router.post('/login', login);
 
-// Forgot password (Mock handler)
+// Admin-only login
+router.post('/admin/login', adminLogin);
+
+// Forgot password (mock)
 router.post('/forgot-password', forgotPassword);
 
 export default router;

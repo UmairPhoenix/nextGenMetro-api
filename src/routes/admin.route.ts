@@ -1,16 +1,27 @@
+// src/routes/admin.routes.ts
 import { Router } from 'express';
-import { login, signup, forgotPassword, adminLogin, createRoute, deleteUser, getAllRoutes, getAllUsers } from '../controllers/adminController';
+import * as adminController from '../controllers/adminController'; // ✅ correct path
 
 const router = Router();
 
-router.post('/signup', signup);
-router.post('/login', login);
-router.post('/forgot-password', forgotPassword);
-router.post('/admin-login', adminLogin); // ✅ This line added
+// ─────────────────────────────────────────────
+// Fare Management
+// ─────────────────────────────────────────────
+router.get('/fares', adminController.getFares);
+router.post('/fares', adminController.createOrUpdateFare);
+router.delete('/fares/:service', adminController.deleteFare);
 
-router.get('/users', getAllUsers);
-router.delete('/users/:id', deleteUser);
+// ─────────────────────────────────────────────
+// Route Management
+// ─────────────────────────────────────────────
+router.get('/routes', adminController.getRoutes);
+router.post('/routes', adminController.createRoute);
+router.delete('/routes/:id', adminController.deleteRoute);
 
-router.get('/routes', getAllRoutes);
-router.post('/routes', createRoute);
+// ─────────────────────────────────────────────
+// User Management
+// ─────────────────────────────────────────────
+router.get('/users', adminController.getUsers);
+router.delete('/users/:id', adminController.deleteUser);
+
 export default router;
